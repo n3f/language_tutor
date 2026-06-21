@@ -210,9 +210,8 @@ storage. There is no application backend.
 - **No remote logs.** Useful for privacy; bad for production debugging.
 - **No cross-device sync.** Acceptable for a personal tool.
 
-The intended end state is to encrypt persisted keys with a PIN-derived
-key (and offer WebAuthn as an alternative unlock). That layer is
-currently stubbed — see §10 for the full status.
+Encrypting persisted keys with a PIN-derived AES key (with WebAuthn as
+an alternative unlock) is a planned v2 enhancement — see §10.3.
 
 ### 4.3  Deploy target: Cloudflare Workers via TanStack Start
 
@@ -272,9 +271,9 @@ addition.
   KB JSON (capped at 5 MB on upload, see §10.2) which can introduce a
   noticeable parse pause for pathological KBs. The cap defends against
   this.
-- The intended encrypt-at-rest design (PIN-derived AES-256-GCM with the
-  encrypted blob in IndexedDB) has not been implemented yet. Today's
-  config and KB are stored plaintext — see §10.
+- Encrypt-at-rest (PIN-derived AES-256-GCM with the encrypted blob in
+  IndexedDB) is a planned v2 enhancement; v1 stores config and KB as
+  plaintext localStorage — see §10.
 
 ---
 
@@ -947,12 +946,13 @@ AES-256-GCM key from the user's PIN via PBKDF2 (100k iterations + random
 salt) and store the encrypted config + KB in IndexedDB instead of
 plaintext localStorage.
 
-**Why not yet.** The unlock screens (`src/routes/setup.tsx`,
-`src/routes/unlock.tsx`) collect PINs and surface Touch ID, but the
-encryption layer is a `// would encrypt & save here` comment, not a
-deliverable. It's a non-trivial chunk of work (key derivation, atomic
-re-encryption on PIN change, lockout state) and hasn't been blocking
-real-world use of the app.
+**Roadmap.** PIN-derived encryption is a planned v2 enhancement. The
+unlock UI scaffolding (`src/routes/setup.tsx`, `src/routes/unlock.tsx`)
+is in place; v2 fills in the AES-256-GCM encryption layer described in
+§10.3. Scoped out of v1 because the project target — a single-user
+personal tool on a trusted device — doesn't materially benefit from
+at-rest encryption that an attacker with device access could likely
+bypass anyway.
 
 **Trade-off accepted in the meantime.** A client-only app can't truly
 hide keys from anyone with access to the device. The mitigations in
@@ -978,14 +978,17 @@ This is defense in depth. The real attacker is a malicious KB file
 the user might be given — and the model itself remains the final
 guard against following injected instructions.
 
-### 10.3  Unlock / authentication (currently stubbed)
+### 10.3  Unlock / authentication (planned for v2)
 
-`src/routes/setup.tsx` collects a PIN during onboarding;
-`src/routes/unlock.tsx` provides a return-visit gate with Touch ID and
-PIN options. **Neither is wired** — the unlock screen navigates on any
-4+ digit PIN; setup doesn't persist a PIN or encrypt the config.
+The unlock UI is in place — `src/routes/setup.tsx` collects a PIN
+during onboarding; `src/routes/unlock.tsx` provides a return-visit
+gate with Touch ID and PIN options. The encryption layer that would
+back them is a planned v2 enhancement. In the current build the
+unlock screen navigates on any 4+ digit PIN and setup doesn't persist
+a PIN or encrypt the config; v1 ships as "trusted personal device"
+(§10.1).
 
-**Intended design.**
+**v2 design.**
 
 - **PIN path.** Derive an AES key from the PIN via PBKDF2 (100,000
   iterations, random salt stored alongside the ciphertext). Encrypt
@@ -2172,8 +2175,8 @@ clone and deploy without provisioning anything.
 | `src/routes/__root.tsx` | Root layout, theme provider, head tags (including preconnects to OpenAI / Groq). Defines the sticky `TopNav` (Practice / Guide / Settings tabs with theme toggle on the left edge and GitHub icon on the right edge), the `useTheme` hook, and the footer with the Contact / "Buy me a coffee" links. |
 | `src/routes/index.tsx` | The chat surface. Owns the mic → STT → chat → TTS orchestration. Holds the per-message audio cache for the replay button (§7.8) and the language-defensive composition via `composeFinalPrompt`. |
 | `src/routes/settings.tsx` | Config + KB + custom-prompt editor. `Save Settings` persists config and the prompt together; the textarea preview re-prepends a fresh `LANGUAGE` section so the user sees what their prompt looks like at chat time. Owns "Clear All Data" and `applyLanguageChange` (which clears conversation history when language changes). |
-| `src/routes/setup.tsx` | First-run wizard (stubbed — does not persist the PIN or encrypt). |
-| `src/routes/unlock.tsx` | Return-visit unlock screen (stubbed — accepts any PIN). |
+| `src/routes/setup.tsx` | First-run wizard. UI in place; the encryption layer is a planned v2 enhancement (§10.3). |
+| `src/routes/unlock.tsx` | Return-visit unlock screen. UI in place; the unlock layer is a planned v2 enhancement (§10.3). |
 | `src/routes/instructions.tsx` | The Guide page. Parses `src/content/instructions.md` into title / intro / accordion sections and renders each section's body through `react-markdown` with component overrides matched to the existing styling (§11.5). |
 | `src/content/instructions.md` | Source-of-truth prose for the Guide page. Editing this file changes the page text without any JSX edits. See §11.5 for the markdown conventions. |
 | `src/components/MicButton.tsx` | The big mic button with hold-to-talk behaviour. |
@@ -2320,13 +2323,9 @@ See §11.5 for the rationale and full mechanism.
 
 Add an entry to `LANGUAGES` in `src/lib/language-config.ts` with the
 `sttCode`, `promptLang`, and `ttsLang` set. Mark `beta: true` until LLM
-grammar-correction reliability is verified on a held-out sample. The
-`personaPrompt` field can be omitted or stubbed — it's currently unused
-at runtime (see §8).
+grammar-correction reliability is verified on a held-out sample.
 
-### Cleaning up the unused `personaPrompt` field
+### Known cleanup items
 
-Either wire it into the prompt build (probably as an alternative to the
-English "friendly native speaker" CONVERSATION STYLE for non-English
-practice) or delete it from `LanguageConfig` and all twelve language
-entries. Same for `correctionIntro` — defined but never read.
+`LanguageConfig.personaPrompt` and `LanguageConfig.correctionIntro` are
+populated for every language but not read at runtime.
