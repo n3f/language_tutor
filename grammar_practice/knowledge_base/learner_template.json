@@ -1,0 +1,10 @@
+{
+  "user": "Learner Name",
+  "language": "Target Language",
+  "native_language": "Native Language",
+  "created": "YYYY-MM-DD",
+  "last_updated": "YYYY-MM-DD",
+  "total_sessions": 0,
+  "persistent_patterns": [],
+  "topics": []
+}
