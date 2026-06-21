@@ -42,7 +42,7 @@ The best way to advance your learning is to get a good grammar book, follow its 
 
 This approach requires an AI assistant that can automatically read from and write to the knowledge base JSON file in the local filesystem without manual intervention. Claude Cowork is the recommended environment, as it handles this natively. If Cowork is unavailable, the closest alternative is to use the GPT Filesystem MCP server with the ChatGPT Desktop app, which replicates local file access via MCP. Manus (manus.im) is another option — its "My Computer" desktop feature supports local file read/write and is model-agnostic. 
 
-You can download the files [here](https://github.com/mamnunam/language_tutor) and ask AI to adjust it to your personal profile.
+You can download the files [here](https://github.com/mamnunam/language_tutor/tree/main/grammar_practice) and ask AI to adjust it to your personal profile.
 
 ## Loading your Knowledge Base file
 
