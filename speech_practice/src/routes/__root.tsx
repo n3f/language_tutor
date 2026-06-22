@@ -133,7 +133,9 @@ function RootComponent() {
           <p className="text-xs text-muted-foreground">Built by Alex Shelaev, 2026</p>
           <div className="flex items-center justify-center gap-3">
             <a
-              href="mailto:alsh@duck.com"
+              href="https://www.linkedin.com/in/shelaev/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-xs text-primary hover:underline transition-colors"
             >
               Contact me
